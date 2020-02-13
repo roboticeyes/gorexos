@@ -2,37 +2,46 @@ package rexos
 
 import (
 	b64 "encoding/base64"
+	"fmt"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/tidwall/gjson"
+)
+
+const (
+	pathPrefix = "/rex-gateway"
 )
 
 // RequestHandler interface
 type RequestHandler interface {
-	Authenticate(id, secret string) string
+	Authenticate(domain, id, secret string) Session
 	Post(path string, body interface{}) (*resty.Response, error)
 	Delete(path string, body interface{}) (*resty.Response, error)
 }
 
 type requestHandler struct {
-	client     *resty.Client
-	token      string
-	userID     string
-	domain     string
-	pathPrefix string
+	client  *resty.Client
+	session Session
 }
 
 // NewRequestHandler creates a new handler
-func NewRequestHandler(domain, pathPrefix string) RequestHandler {
+func NewRequestHandler() RequestHandler {
 
 	return &requestHandler{
-		client:     resty.New(),
-		domain:     domain,
-		pathPrefix: pathPrefix,
+		client: resty.New(),
 	}
 }
 
-func (r *requestHandler) Authenticate(clientID, clientSecret string) string {
+// AuthenticateWithSession uses an existing session
+func (r *requestHandler) AuthenticateWithSession(session Session) error {
+	if session.Valid() {
+		r.session = session
+		return nil
+	}
+	return fmt.Errorf("Session has expired, please login again")
+}
+
+// Authenticate uses clientID and clientSecret for authentication and returns a session
+func (r *requestHandler) Authenticate(domain, clientID, clientSecret string) Session {
 
 	payload := clientID + ":" + clientSecret
 	encodedToken := b64.StdEncoding.EncodeToString([]byte(payload))
@@ -43,16 +52,14 @@ func (r *requestHandler) Authenticate(clientID, clientSecret string) string {
 		SetHeader("Accept", "application/json").
 		SetHeader("Authorization", "Basic "+encodedToken).
 		SetBody([]byte(`grant_type=client_credentials`)).
-		Post("https://" + r.domain + "/oauth/token")
+		Post("https://" + domain + "/oauth/token")
 
 	if err != nil {
 		panic(err)
 	}
-	body := string(resp.Body())
-	r.token = gjson.Get(body, "access_token").String()
-	r.userID = gjson.Get(body, "user_id").String()
-
-	return r.userID
+	r.session = NewSession(domain, resp.Body())
+	fmt.Println(r.session)
+	return r.session
 }
 
 func (r *requestHandler) Post(path string, body interface{}) (*resty.Response, error) {
@@ -60,9 +67,9 @@ func (r *requestHandler) Post(path string, body interface{}) (*resty.Response, e
 	return r.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
-		SetAuthToken(r.token).
+		SetAuthToken(r.session.AccessToken).
 		SetBody(body).
-		Post("https://" + r.domain + r.pathPrefix + path)
+		Post("https://" + r.session.Domain + pathPrefix + path)
 }
 
 func (r *requestHandler) Delete(path string, body interface{}) (*resty.Response, error) {
@@ -70,7 +77,7 @@ func (r *requestHandler) Delete(path string, body interface{}) (*resty.Response,
 	return r.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
-		SetAuthToken(r.token).
+		SetAuthToken(r.session.AccessToken).
 		SetBody(body).
-		Delete("https://" + r.domain + r.pathPrefix + path)
+		Delete("https://" + r.session.Domain + pathPrefix + path)
 }

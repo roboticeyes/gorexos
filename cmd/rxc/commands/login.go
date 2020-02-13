@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
@@ -44,11 +44,12 @@ func loginAction(ctx *cli.Context) error {
 
 	userList.SetSelectedFunc(func(idx int, mainText string, secondaryText string, shortcut rune) {
 		app.Stop()
-		handler := rexos.NewRequestHandler(config.Instances[selectedInstance].URL, "/rex-gateway/api/v2")
+		handler := rexos.NewRequestHandler()
 		clientID := config.Instances[selectedInstance].Users[idx].ClientID
 		clientSecret := config.Instances[selectedInstance].Users[idx].ClientSecret
-		userID := handler.Authenticate(clientID, clientSecret)
-		fmt.Println("UserID: ", userID)
+		session := handler.Authenticate(config.Instances[selectedInstance].URL, clientID, clientSecret)
+		f, _ := os.Create("session.json")
+		session.Write(f)
 	})
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
