@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
 
 	"github.com/gookit/color"
 	"github.com/roboticeyes/gorexos/pkg/http/rexos"
@@ -28,11 +30,20 @@ func projectAction(ctx *cli.Context) error {
 		color.Red.Println("Cannot authenticate, please use login")
 	}
 
-	p, err := rexos.GetProjectByUrn(handler, "robotic-eyes:project:3147")
-	if err != nil {
-		color.Red.Println("Error:", err)
-		return nil
+	projects, err := rexos.GetAllProjectsByOwner(handler, "user-id-m")
+
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintf(tw, "Urn\tName\tType\tScheme\tPublic\t#ProjectFiles\n")
+	for _, p := range projects {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%v\t%d\n", p.Urn, p.Name, p.Type, p.Scheme, p.Public, p.NumberOfProjectFiles)
 	}
-	fmt.Println(p)
+	tw.Flush()
+
+	// p, err := rexos.GetProjectByUrn(handler, "robotic-eyes:project:3147")
+	// if err != nil {
+	// 	color.Red.Println("Error:", err)
+	// 	return nil
+	// }
+	// fmt.Println(p)
 	return nil
 }

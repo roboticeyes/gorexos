@@ -3,7 +3,7 @@ package rexos
 var (
 	// REXos core services
 	apiProjectByNameAndOwner           = "/api/v2/projects/search/findByNameAndOwner?"
-	apiProjectByOwner                  = "/api/v2/projects/search/findAllByOwner?owner="
+	apiProjectByOwner                  = "/api/v2/projects/search/findAllByOwner?"
 	apiProjectFiles                    = "/api/v2/projectFiles/"
 	apiProjectFileFindByProjectAndName = "/api/v2/projectFiles/search/findByProjectAndName?"
 	apiProjectsByUrn                   = "/api/v2/projects/search/findByUrn?"

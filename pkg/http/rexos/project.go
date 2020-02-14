@@ -26,11 +26,24 @@ type Project struct {
 	RootRexReferenceKey  string `json:"rootRexReferenceKey"`
 }
 
+// GetAllProjectsByOwner fetches all project for a given owner
+func GetAllProjectsByOwner(handler RequestHandler, owner string) ([]Project, error) {
+
+	var projects []Project
+	resp, err := handler.Get(apiProjectByOwner + "owner=" + owner + "&projection=detailedList")
+
+	if err != nil {
+		return projects, err
+	}
+	projectList := []byte(gjson.GetBytes(resp.Body(), "_embedded.projects").Raw)
+	err = json.Unmarshal(projectList, &projects)
+	return projects, err
+}
+
 // GetProjectByUrn fetches the project by a given URN
 func GetProjectByUrn(handler RequestHandler, urn string) (Project, error) {
 
 	var project Project
-
 	resp, err := handler.Get(apiProjectsByUrn + "urn=" + urn + "&projection=detailedList")
 
 	if err != nil {
