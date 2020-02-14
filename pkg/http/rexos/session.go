@@ -19,7 +19,7 @@ type Session struct {
 	UserName        string    `json:"user_name"`
 	UserDisplayName string    `json:"user_display_name"`
 	Jti             string    `json:"jti"`
-	Expires         time.Time `json:expires`
+	Expires         time.Time `json:"expires"`
 }
 
 // NewSession creates a new session of the authentication response

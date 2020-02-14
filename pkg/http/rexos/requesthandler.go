@@ -14,6 +14,7 @@ const (
 // RequestHandler interface
 type RequestHandler interface {
 	Authenticate(domain, id, secret string) Session
+	Get(path string) (*resty.Response, error)
 	Post(path string, body interface{}) (*resty.Response, error)
 	Delete(path string, body interface{}) (*resty.Response, error)
 }
@@ -58,8 +59,16 @@ func (r *requestHandler) Authenticate(domain, clientID, clientSecret string) Ses
 		panic(err)
 	}
 	r.session = NewSession(domain, resp.Body())
-	fmt.Println(r.session)
 	return r.session
+}
+
+func (r *requestHandler) Get(path string) (*resty.Response, error) {
+
+	return r.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", "application/json").
+		SetAuthToken(r.session.AccessToken).
+		Get("https://" + r.session.Domain + pathPrefix + path)
 }
 
 func (r *requestHandler) Post(path string, body interface{}) (*resty.Response, error) {
