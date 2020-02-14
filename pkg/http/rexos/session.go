@@ -62,7 +62,7 @@ func OpenSession(r io.Reader) (Session, error) {
 
 	color.Cyan.Println("============================================================")
 	color.Cyan.Println("Instance:", session.Domain)
-	color.Cyan.Println("UserID:", session.UserID)
+	color.Cyan.Println("UserID:  ", session.UserID)
 	color.Cyan.Println("Username:", session.UserName)
 	color.Cyan.Println("============================================================")
 	return session, err
