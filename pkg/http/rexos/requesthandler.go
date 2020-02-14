@@ -14,6 +14,7 @@ const (
 // RequestHandler interface
 type RequestHandler interface {
 	Authenticate(domain, id, secret string) Session
+	AuthenticateWithSession(session Session) error
 	Get(path string) (*resty.Response, error)
 	Post(path string, body interface{}) (*resty.Response, error)
 	Delete(path string, body interface{}) (*resty.Response, error)

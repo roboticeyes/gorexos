@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"time"
+
+	"github.com/gookit/color"
 )
 
 // Session stores the information which gets retrieved after successful authentication. It also
@@ -31,7 +34,6 @@ func NewSession(domain string, body []byte) Session {
 		panic(err)
 	}
 
-	// TODO set the expires date using the expires_in value in seconds
 	session.Expires = time.Now().Add(time.Second * time.Duration(session.ExpiresIn))
 	session.Domain = domain
 	return session
@@ -39,8 +41,30 @@ func NewSession(domain string, body []byte) Session {
 
 // Valid checks if the session has already expired
 func (s *Session) Valid() bool {
-	// TODO check if token is still valid
+
+	if time.Now().Sub(s.Expires) > 0 {
+		return false
+	}
 	return true
+}
+
+// OpenSession opens a session from a given file reader
+func OpenSession(r io.Reader) (Session, error) {
+
+	var session Session
+	body, err := ioutil.ReadAll(r)
+
+	if err != nil {
+		return session, err
+	}
+
+	err = json.Unmarshal(body, &session)
+
+	color.Cyan.Println("============================================================")
+	color.Cyan.Println("Instance:", session.Domain)
+	color.Cyan.Println("Username:", session.UserName)
+	color.Cyan.Println("============================================================")
+	return session, err
 }
 
 func (s *Session) Write(w io.Writer) error {

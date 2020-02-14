@@ -41,10 +41,15 @@ func main() {
 
 	app.Commands = []*cli.Command{
 		commands.LoginCommand,
+		commands.ProjectCommand,
 	}
+
+	// Make sure that the session file gets closed
+	defer commands.SessionFile.Close()
 
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

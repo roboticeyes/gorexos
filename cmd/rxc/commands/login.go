@@ -2,13 +2,28 @@ package commands
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/gdamore/tcell"
+	"github.com/gookit/color"
 	"github.com/rivo/tview"
 	"github.com/roboticeyes/gorexos/pkg/config"
 	"github.com/roboticeyes/gorexos/pkg/http/rexos"
 	"github.com/urfave/cli/v2"
 )
+
+// SessionFile is opened on a package level
+var SessionFile *os.File
+
+// Open the session file
+func init() {
+	var err error
+	SessionFile, err = os.Open(filepath.Join(config.UserRexOSDir(), ".session.json"))
+	if err != nil {
+		color.Red.Println("Please use login command to get a session file")
+		os.Exit(1)
+	}
+}
 
 // LoginCommand performs a login to the REXos platform with the given credentials
 var LoginCommand = &cli.Command{
@@ -19,13 +34,13 @@ var LoginCommand = &cli.Command{
 
 func loginAction(ctx *cli.Context) error {
 
-	config := ctx.App.Metadata["config"].(*config.Config)
+	cfg := ctx.App.Metadata["config"].(*config.Config)
 
 	app := tview.NewApplication()
 	instanceList := tview.NewList()
 	userList := tview.NewList()
 
-	for k, i := range config.Instances {
+	for k, i := range cfg.Instances {
 		if len(i.Users) > 0 {
 			instanceList.AddItem(i.Name, i.URL, rune(48+k), nil)
 		}
@@ -36,7 +51,7 @@ func loginAction(ctx *cli.Context) error {
 	instanceList.SetSelectedFunc(func(idx int, mainText string, secondaryText string, shortcut rune) {
 		userList.Clear()
 		selectedInstance = idx
-		for k, u := range config.Instances[idx].Users {
+		for k, u := range cfg.Instances[idx].Users {
 			userList.AddItem(u.Name, u.ClientID, rune(48+k), nil)
 		}
 		app.SetRoot(userList, true)
@@ -45,10 +60,10 @@ func loginAction(ctx *cli.Context) error {
 	userList.SetSelectedFunc(func(idx int, mainText string, secondaryText string, shortcut rune) {
 		app.Stop()
 		handler := rexos.NewRequestHandler()
-		clientID := config.Instances[selectedInstance].Users[idx].ClientID
-		clientSecret := config.Instances[selectedInstance].Users[idx].ClientSecret
-		session := handler.Authenticate(config.Instances[selectedInstance].URL, clientID, clientSecret)
-		f, _ := os.Create("session.json")
+		clientID := cfg.Instances[selectedInstance].Users[idx].ClientID
+		clientSecret := cfg.Instances[selectedInstance].Users[idx].ClientSecret
+		session := handler.Authenticate(cfg.Instances[selectedInstance].URL, clientID, clientSecret)
+		f, _ := os.Create(filepath.Join(config.UserRexOSDir(), ".session.json"))
 		session.Write(f)
 	})
 
