@@ -21,7 +21,7 @@ func init() {
 	SessionFile, err = os.Open(filepath.Join(config.UserRexOSDir(), ".session.json"))
 	if err != nil {
 		color.Red.Println("Please use login command to get a session file")
-		os.Exit(1)
+		// os.Exit(1)
 	}
 }
 
