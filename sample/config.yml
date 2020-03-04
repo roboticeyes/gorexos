@@ -1,0 +1,20 @@
+api-version: v2
+
+instances:
+    - name: rex-production
+      url: api.rexos.cloud
+      users:
+        - name: <myuser>
+          client-id: <clientid>
+          client-secret: <clientsecret>
+
+        - name: <myseconduser>
+          client-id: <clientid>
+          client-secret: <clientsecret>
+
+    - name: rex-test
+      url: api-test.rexos.cloud
+      users:
+        - name: <myuser>
+          client-id:
+          client-secret:
