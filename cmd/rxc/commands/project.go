@@ -33,7 +33,7 @@ func projectAction(ctx *cli.Context) error {
 		color.Red.Println("Cannot authenticate, please use login")
 	}
 
-	projects, err := rexos.GetAllProjectsByOwner(handler, "user-id-m")
+	projects, err := rexos.GetAllProjectsByOwner(handler, session.UserID)
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(tw, "Urn\tName\tType\tScheme\tPublic\t#ProjectFiles\n")

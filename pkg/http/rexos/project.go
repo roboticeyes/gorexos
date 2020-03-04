@@ -26,6 +26,29 @@ type Project struct {
 	RootRexReferenceKey  string `json:"rootRexReferenceKey"`
 }
 
+// Statistics is the user general statistics in REXos
+type Statistics struct {
+	NumberOfProjects              int `json:"numberOfProjects"`
+	MaxNumberOfProjects           int `json:"maxNumberOfProjects"`
+	TotalUsedDiskSpace            int `json:"totalUsedDiskSpace"`
+	MaxTotalUsedDiskSpace         int `json:"maxTotalUsedDiskSpace"`
+	NumberOfPublicShareActions    int `json:"numberOfPublicShareActions"`
+	MaxNumberOfPublicShareActions int `json:"maxNumberOfPublicShareActions"`
+}
+
+// GetUserStatistics fetches all statistics for a given user
+func GetUserStatistics(handler RequestHandler, userID string) (Statistics, error) {
+
+	var stats Statistics
+	resp, err := handler.Get(apiStatisticsByUserID + userID)
+
+	if err != nil {
+		return stats, err
+	}
+	err = json.Unmarshal(resp.Body(), &stats)
+	return stats, err
+}
+
 // GetAllProjectsByOwner fetches all project for a given owner
 func GetAllProjectsByOwner(handler RequestHandler, owner string) ([]Project, error) {
 

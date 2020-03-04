@@ -9,8 +9,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const (
-	version = "v0.1"
+var (
+	// Version string from ldflags
+	Version string
+	// Build string from ldflags
+	Build string
 )
 
 func main() {
@@ -21,7 +24,16 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "rxc"
 	app.Usage = "REXos control client"
-	app.Version = version
+	app.Version = Version + " - build " + Build
+	app.Description = `
+	This tool allows to communicate with REXos. The first operation is to login by calling rxc login. Please make
+	sure that you have a proper config file. Under Linux you can put your default config under ~/.config/rexos/config.yml.
+	A sample can be found in the sample folder. The login operation caches the token on your local machine, and other
+	commands can pick up the credentials. Simply perform a rxc projects to list your projects.
+
+	Login by: rxc login
+	List your projects: rxc projects
+	`
 	app.Copyright = "(c) 2020 Robotic Eyes GmbH"
 	app.EnableBashCompletion = true
 	app.Flags = GlobalFlags
@@ -41,6 +53,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		commands.LoginCommand,
 		commands.ProjectCommand,
+		commands.StatisticsCommand,
 	}
 
 	err := app.Run(os.Args)
