@@ -5,25 +5,11 @@ import (
 	"path/filepath"
 
 	"github.com/gdamore/tcell"
-	"github.com/gookit/color"
 	"github.com/rivo/tview"
 	"github.com/roboticeyes/gorexos/pkg/config"
 	"github.com/roboticeyes/gorexos/pkg/http/rexos"
 	"github.com/urfave/cli/v2"
 )
-
-// SessionFile is opened on a package level
-var SessionFile *os.File
-
-// Open the session file
-func init() {
-	var err error
-	SessionFile, err = os.Open(filepath.Join(config.UserRexOSDir(), ".session.json"))
-	if err != nil {
-		color.Red.Println("Please use login command to get a session file")
-		// os.Exit(1)
-	}
-}
 
 // LoginCommand performs a login to the REXos platform with the given credentials
 var LoginCommand = &cli.Command{

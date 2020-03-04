@@ -19,7 +19,10 @@ var ProjectCommand = &cli.Command{
 
 func projectAction(ctx *cli.Context) error {
 
-	session, err := rexos.OpenSession(SessionFile)
+	session, err := rexos.OpenStoredSession()
+	if err != nil {
+		return err
+	}
 	if !session.Valid() {
 		color.Red.Println("Session is not valid and is expired on ", session.Expires)
 		return nil
