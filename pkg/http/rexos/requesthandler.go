@@ -3,6 +3,7 @@ package rexos
 import (
 	b64 "encoding/base64"
 	"fmt"
+	"io"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -18,6 +19,7 @@ type RequestHandler interface {
 	Get(path string) (*resty.Response, error)
 	Post(path string, body interface{}) (*resty.Response, error)
 	Delete(path string, body interface{}) (*resty.Response, error)
+	PostMultipartFile(path string, fileData io.Reader) (*resty.Response, error)
 }
 
 type requestHandler struct {
@@ -90,4 +92,12 @@ func (r *requestHandler) Delete(path string, body interface{}) (*resty.Response,
 		SetAuthToken(r.session.AccessToken).
 		SetBody(body).
 		Delete("https://" + r.session.Domain + pathPrefix + path)
+}
+
+func (r *requestHandler) PostMultipartFile(path string, fileData io.Reader) (*resty.Response, error) {
+
+	return r.client.R().
+		SetFileReader("file", "test-img.jpg", fileData).
+		SetAuthToken(r.session.AccessToken).
+		Post("https://" + r.session.Domain + pathPrefix + path)
 }
