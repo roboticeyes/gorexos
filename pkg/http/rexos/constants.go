@@ -10,6 +10,7 @@ var (
 	apiProjectsByUrn                   = "/api/v2/projects/search/findByUrn?"
 	apiProjects                        = "/api/v2/projects"
 	apiReferences                      = "/api/v2/rexReferences"
+	apiReferenceByKey                  = "/api/v2/rexReferences/search/findByKey?"
 
 	// Construction service
 	apiConstructionLayoutItems            = "/construction/v1/constructionLayoutItems"
