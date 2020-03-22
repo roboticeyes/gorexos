@@ -31,7 +31,7 @@ func referenceTreeAction(ctx *cli.Context) error {
 		color.Red.Println("Cannot authenticate, please use login")
 	}
 
-	root, err := rexos.GetReferenceTreeByProjectUrn(handler, "robotic-eyes:project:9232")
+	root, err := rexos.GetReferenceTreeByProjectUrn(handler, "robotic-eyes:project:9926")
 	if err != nil {
 		color.Red.Println("Error:", err)
 		return nil

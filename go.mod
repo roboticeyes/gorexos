@@ -9,7 +9,7 @@ require (
 	github.com/gookit/color v1.2.2
 	github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498
 	github.com/stretchr/testify v1.4.0 // indirect
-	github.com/tidwall/gjson v1.5.0
+	github.com/tidwall/gjson v1.6.0
 	github.com/urfave/cli/v2 v2.1.1
 	gopkg.in/yaml.v2 v2.2.2
 )
