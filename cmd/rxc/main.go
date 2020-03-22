@@ -50,6 +50,11 @@ func main() {
 		return nil
 	}
 
+	app.Action = func(c *cli.Context) error {
+		NewApp(c).Run()
+		return nil
+	}
+
 	app.Commands = []*cli.Command{
 		commands.LoginCommand,
 		commands.ProjectCommand,

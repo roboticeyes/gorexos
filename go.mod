@@ -7,7 +7,7 @@ require (
 	github.com/gdamore/tcell v1.3.0
 	github.com/go-resty/resty/v2 v2.1.0
 	github.com/gookit/color v1.2.2
-	github.com/rivo/tview v0.0.0-20200204110323-ae3d8cac5e4b
+	github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tidwall/gjson v1.5.0
 	github.com/urfave/cli/v2 v2.1.1
