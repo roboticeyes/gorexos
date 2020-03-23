@@ -15,13 +15,15 @@ import (
 
 // App is the main app
 type App struct {
-	app          *tview.Application
-	status       *tview.TextView
-	counter      int
-	clientID     string
-	clientSecret string
-	authURL      string
-	session      rexos.Session
+	app              *tview.Application
+	status           *tview.TextView
+	counter          int
+	clientID         string
+	clientSecret     string
+	authURL          string
+	session          rexos.Session
+	selectedUser     string
+	selectedInstance string
 }
 
 const refreshInterval = time.Second
@@ -39,6 +41,14 @@ func createList(title string) *tview.List {
 	return l
 }
 
+func (a *App) getStatusText() string {
+	s := "You are logged in REXos\n\n"
+	s += "   Instance:      " + a.selectedInstance + "\n"
+	s += "   User:          " + a.selectedUser + "\n"
+	s += "   Token refresh: "
+	return fmt.Sprintf("%s%d", s, a.counter)
+}
+
 func (a *App) updateTime() {
 	for {
 		time.Sleep(refreshInterval)
@@ -46,7 +56,7 @@ func (a *App) updateTime() {
 			continue
 		}
 		a.app.QueueUpdateDraw(func() {
-			a.status.SetText(fmt.Sprintf("Token refreshes in %d seconds", a.counter))
+			a.status.SetText(a.getStatusText())
 		})
 		a.counter--
 		if a.counter <= 10 { // 10 seconds before token expires
@@ -88,6 +98,7 @@ func NewApp(ctx *cli.Context) UIRunner {
 	listInstance.SetSelectedFunc(func(idx int, mainText string, secondaryText string, shortcut rune) {
 		listUser.Clear()
 		selectedInstance = idx
+		a.selectedInstance = cfg.Instances[idx].Name
 		for k, u := range cfg.Instances[idx].Users {
 			listUser.AddItem(u.Name, u.ClientID, rune(48+k), nil)
 		}
@@ -97,6 +108,7 @@ func NewApp(ctx *cli.Context) UIRunner {
 	listUser.SetSelectedFunc(func(idx int, mainText string, secondaryText string, shortcut rune) {
 		a.clientID = cfg.Instances[selectedInstance].Users[idx].ClientID
 		a.clientSecret = cfg.Instances[selectedInstance].Users[idx].ClientSecret
+		a.selectedUser = cfg.Instances[selectedInstance].Users[idx].Name
 		a.authURL = cfg.Instances[selectedInstance].URL
 		a.app.SetRoot(center(0, 0, a.status), true)
 		a.refreshToken()
