@@ -15,6 +15,7 @@ type Reference struct {
 	Name               string `json:"name"`
 	Key                string `json:"key"`
 	Category           string `json:"category"`
+	ProjectFileUrn     string `json:"projectFileUrn"`
 	Type               string `json:"type"`
 	Links              struct {
 		Self struct {
