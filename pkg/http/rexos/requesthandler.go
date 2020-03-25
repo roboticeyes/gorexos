@@ -17,6 +17,7 @@ type RequestHandler interface {
 	Authenticate(domain, id, secret string) Session
 	AuthenticateWithSession(session Session) error
 	Get(path string) (*resty.Response, error)
+	GetFullyQualified(path string) (*resty.Response, error)
 	Post(path string, body interface{}) (*resty.Response, error)
 	Delete(path string, body interface{}) (*resty.Response, error)
 	PostMultipartFile(path string, fileName string, fileData io.Reader) (*resty.Response, error)
@@ -72,6 +73,15 @@ func (r *requestHandler) Get(path string) (*resty.Response, error) {
 		SetHeader("Accept", "application/json").
 		SetAuthToken(r.session.AccessToken).
 		Get("https://" + r.session.Domain + pathPrefix + path)
+}
+
+func (r *requestHandler) GetFullyQualified(path string) (*resty.Response, error) {
+
+	return r.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", "application/json").
+		SetAuthToken(r.session.AccessToken).
+		Get(path)
 }
 
 func (r *requestHandler) Post(path string, body interface{}) (*resty.Response, error) {
