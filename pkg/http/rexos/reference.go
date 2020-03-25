@@ -14,6 +14,7 @@ type Reference struct {
 	RootReference      bool   `json:"rootReference"`
 	Name               string `json:"name"`
 	Key                string `json:"key"`
+	Category           string `json:"category"`
 	Type               string `json:"type"`
 	Links              struct {
 		Self struct {
@@ -32,8 +33,6 @@ type Reference struct {
 			Templated bool   `json:"templated"`
 		} `json:"parentReference"`
 	} `json:"_links"`
-
-	Children []*Reference
 }
 
 // GetReferenceByKey returns a REX reference by the given key
@@ -52,46 +51,19 @@ func GetReferenceByKey(handler RequestHandler, key string) (Reference, error) {
 		return ref, fmt.Errorf("%s", gjson.Get(string(resp.Body()), "message").String())
 	}
 
-	// Get child references
-	var childReferences []Reference
-	childReferencesRaw := []byte(gjson.GetBytes(resp.Body(), "_embedded.childReferences").Raw)
-	err = json.Unmarshal(childReferencesRaw, &childReferences)
-
-	for _, r := range childReferences {
-		ref.Children = append(ref.Children, &Reference{
-			Name: r.Name,
-			Urn:  r.Urn,
-			Key:  r.Key,
-			Type: r.Type,
-		})
-	}
 	return ref, err
-}
-
-func indent(level int) string {
-	str := ""
-	for i := 0; i < level; i++ {
-		str += "  "
-	}
-	return str
-}
-
-func printReference(level int, r Reference) string {
-
-	var str string
-	str += "\n"
-	str += fmt.Sprintf("%sType: %s\n", indent(level), r.Type)
-	str += fmt.Sprintf("%sName: %s\n", indent(level), r.Name)
-	str += fmt.Sprintf("%sUrn:  %s\n", indent(level), r.Urn)
-	str += fmt.Sprintf("%sKey:  %s\n", indent(level), r.Key)
-
-	for i := 0; i < len(r.Children); i++ {
-		str += printReference(i+1, *r.Children[i])
-	}
-	return str
 }
 
 func (r Reference) String() string {
 
-	return printReference(0, r)
+	var str string
+	str += fmt.Sprintf("%s\n", r.Urn)
+	// str += "\n"
+	// str += fmt.Sprintf("%sType: %s\n", indent(level), r.Type)
+	// str += fmt.Sprintf("%sName: %s\n", indent(level), r.Name)
+	// str += fmt.Sprintf("%sUrn:  %s\n", indent(level), r.Urn)
+	// str += fmt.Sprintf("%sKey:  %s\n", indent(level), r.Key)
+	// str += fmt.Sprintf("%sRoot: %v\n", indent(level), r.RootReference)
+
+	return str
 }
