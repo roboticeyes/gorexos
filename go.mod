@@ -3,7 +3,7 @@ module github.com/roboticeyes/gorexos
 go 1.13
 
 require (
-	github.com/breiting/tree v0.0.0-20200325095307-e29a5a04468a
+	github.com/breiting/tree v0.0.0-20200325153814-d665d8f23f43
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gdamore/tcell v1.3.0
 	github.com/go-resty/resty/v2 v2.1.0

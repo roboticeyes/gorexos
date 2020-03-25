@@ -2,6 +2,7 @@ package rexos
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 
@@ -79,15 +80,13 @@ func (t *ReferenceTree) Beautify() {
 			case "portal":
 				node.Attributes["color"] = "lightpink1"
 				node.Attributes["shape"] = "doublecircle"
+			case "root":
+				node.Attributes["color"] = "yellow2"
 			case "group":
 				node.Attributes["color"] = "darkolivegreen1"
 			case "file":
 				node.Attributes["color"] = "darkorange"
 			}
-
-			// shape is resource type
-			// color is type von reference
-			// file size und file name
 
 			switch v.Category {
 			case "activity":
@@ -102,6 +101,21 @@ func (t *ReferenceTree) Beautify() {
 				node.ID = "Route\n" + node.ID
 			case "data":
 				node.ID = "Data\n" + node.ID
+			}
+
+			// attach project file
+			for _, p := range t.ProjectFiles {
+				if p.Urn == v.ProjectFileUrn {
+					// found project file
+					fileSize := fmt.Sprintf("~%.2fmb", float32(p.FileSize)/1000.0/1000.0)
+					pfNode := &tree.Node{
+						ID:         p.Type + "\n" + strip(p.Urn) + "\n" + fileSize,
+						Name:       p.Name,
+						Attributes: make(map[string]string),
+					}
+					pfNode.Attributes["shape"] = "box"
+					node.Children = append(node.Children, pfNode)
+				}
 			}
 		}
 	}
