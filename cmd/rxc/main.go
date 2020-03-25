@@ -18,9 +18,6 @@ var (
 
 func main() {
 
-	// c := config.ReadConfig("/home/breiting/.config/rexos/config.yml")
-	// fmt.Println(c)
-
 	app := cli.NewApp()
 	app.Name = "rxc"
 	app.Usage = "REXos control client"
@@ -33,6 +30,8 @@ func main() {
 
 	Login by: rxc login
 	List your projects: rxc projects
+
+	You may also call rxc withou any parameters which starts a permanent session handler in the terminal.
 	`
 	app.Copyright = "(c) 2020 Robotic Eyes GmbH"
 	app.EnableBashCompletion = true

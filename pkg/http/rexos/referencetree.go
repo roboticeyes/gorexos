@@ -35,12 +35,18 @@ func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (Re
 
 	var refTree ReferenceTree
 
+	// Get project
 	project, err := GetProjectByUrn(handler, projectUrn)
 	if err != nil {
 		return refTree, err
 	}
 	refTree.ProjectUrn = project.Urn
+	refTree.ProjectType = project.Type
 
+	// Get project file list
+	refTree.ProjectFiles, err = GetProjectFilesByProjectSelfLink(handler, project.SelfLink)
+
+	// Get reference tree
 	resp, err := handler.GetFullyQualified(project.SelfLink + "/rexReferences?projection=linkedList")
 	if err != nil {
 		return refTree, err
@@ -50,16 +56,13 @@ func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (Re
 	if err != nil {
 		return refTree, err
 	}
-
-	// TODO get projectFiles
-
+	refTree.References = halTree.Embedded.RexReferences
 	refTree.Tree, err = reconstructReferenceTreefromJSON(halTree.Embedded.RexReferences)
-
 	return refTree, err
 }
 
-// GenerateDotGraphData modifies the tree and adds attributes to the graph
-func (t *ReferenceTree) GenerateDotGraphData() {
+// Beautify modifies the tree and adds attributes to the graph
+func (t *ReferenceTree) Beautify() {
 
 	// add project node
 	root := tree.NewNode(t.ProjectType + "\n" + strip(t.ProjectUrn))
@@ -104,10 +107,9 @@ func (t *ReferenceTree) GenerateDotGraphData() {
 	}
 }
 
-// WriteReferenceTreeToDot gets the reference tree of the project and dumps out the structure as DOT file (graphviz)
-func WriteReferenceTreeToDot(refTree ReferenceTree, w io.Writer) error {
-
-	return tree.WriteToDot(refTree.Tree, w)
+// WriteToDot gets the reference tree of the project and dumps out the structure as DOT file (graphviz)
+func (t *ReferenceTree) WriteToDot(w io.Writer) error {
+	return tree.WriteToDot(t.Tree, w)
 }
 
 func reconstructReferenceTreefromJSON(refs []Reference) (*tree.Node, error) {
