@@ -34,40 +34,11 @@ func TestGenerateRefTree(t *testing.T) {
 		t.Errorf("Tree is nil")
 	}
 
-	refTree.GenerateDotGraphData()
-
-	f, _ := os.Create("/tmp/xxx.dot")
-	defer f.Close()
-	err = WriteReferenceTreeToDot(refTree, f)
+	refTree.Beautify()
+	err = refTree.WriteToDot(os.Stdout)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// check if projectfile exists
-	// pflink := StripTemplateParameter(v.Links.ProjectFile.Href)
-	// pfresp, err := handler.GetFullyQualified(pflink)
-	// if err != nil {
-	// 	fmt.Println("Error during getting project file")
-	// } else {
-	// 	if pfresp.StatusCode() < 400 {
-	// 		name := gjson.GetBytes(pfresp.Body(), "name").String()
-	// 		fmt.Fprintf(f, "%s -> \"%s\";\n", v.Urn[len(v.Urn)-4:], name[0:8])
-	// 		fmt.Fprintf(f, "\"%s\" [shape=box,style=filled,color=yellow]\n", name[0:8])
-	// 	}
-	// }
-	// }
-
-	// for _, v := range halTree.Embedded.RexReferences {
-	// 	if v.Type == "portal" {
-	// 		fmt.Fprintf(f, "%s [shape=doublecircle,style=filled,color=lightblue]\n", v.Urn[len(v.Urn)-4:])
-	// 	} else if v.Type == "group" {
-	// 		fmt.Fprintf(f, "%s [style=filled,color=cyan]\n", v.Urn[len(v.Urn)-4:])
-	// 	} else if v.Type == "file" {
-	// 		fmt.Fprintf(f, "%s [style=filled,color=green]\n", v.Urn[len(v.Urn)-4:])
-	// 	}
-	// }
-	// fmt.Fprintln(f, "}")
-
 }
 
 func TestSimpleRefTree(t *testing.T) {

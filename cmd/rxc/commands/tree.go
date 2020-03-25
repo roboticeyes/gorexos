@@ -3,6 +3,7 @@ package commands
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/gookit/color"
 	"github.com/roboticeyes/gorexos/pkg/http/rexos"
@@ -20,12 +21,27 @@ var ReferenceTreeCommand = &cli.Command{
 			Usage:    "Project URN",
 			Required: true,
 		},
+		&cli.StringFlag{
+			Name:    "output",
+			Usage:   "Output dot file",
+			Aliases: []string{"o"},
+		},
+		&cli.StringFlag{
+			Name:  "format",
+			Usage: "Image format, default is png (e.g. png, svg)",
+		},
 	},
 }
 
 func referenceTreeAction(ctx *cli.Context) error {
 
 	urn := ctx.String("urn")
+	output := ctx.String("output")
+	format := ctx.String("format")
+
+	if format == "" {
+		format = "png"
+	}
 
 	session, err := rexos.OpenStoredSession()
 	if err != nil {
@@ -49,15 +65,29 @@ func referenceTreeAction(ctx *cli.Context) error {
 
 	refTree.Beautify()
 
-	f, _ := os.Create("/tmp/xxx.dot")
-	defer f.Close()
-	err = refTree.WriteToDot(f)
-	// err = refTree.WriteToDot(os.Stdout)
-	if err != nil {
-		color.Red.Println("Cannot dump as dotfile:", err)
+	if output == "" {
+		err = refTree.WriteToDot(os.Stdout)
+		if err != nil {
+			color.Red.Println("Cannot generate dotfile:", err)
+		}
+		return nil
 	}
 
-	cmd := exec.Command("dot", "-Tpng", "-o", "/tmp/xxx.png", "/tmp/xxx.dot")
+	f, _ := os.Create(output)
+	defer f.Close()
+	err = refTree.WriteToDot(f)
+	if err != nil {
+		color.Red.Println("Cannot write dotfile:", err)
+	}
+
+	// check if dot command is available, if so, output an image file as well
+	dot, err := exec.LookPath("dot")
+	if err != nil {
+		return nil
+	}
+
+	imageFile := output[:len(output)-len(filepath.Ext(output))] + "." + format
+	cmd := exec.Command(dot, "-T"+format, "-o", imageFile, output)
 	if err := cmd.Run(); err != nil {
 		color.Red.Println("Cannot execute dot command:", err)
 	}
