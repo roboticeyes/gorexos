@@ -59,12 +59,5 @@ func (r Reference) String() string {
 
 	var str string
 	str += fmt.Sprintf("%s\n", r.Urn)
-	// str += "\n"
-	// str += fmt.Sprintf("%sType: %s\n", indent(level), r.Type)
-	// str += fmt.Sprintf("%sName: %s\n", indent(level), r.Name)
-	// str += fmt.Sprintf("%sUrn:  %s\n", indent(level), r.Urn)
-	// str += fmt.Sprintf("%sKey:  %s\n", indent(level), r.Key)
-	// str += fmt.Sprintf("%sRoot: %v\n", indent(level), r.RootReference)
-
 	return str
 }
