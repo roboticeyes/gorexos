@@ -1,17 +1,111 @@
 package rexos
 
 import (
-	"fmt"
+	"encoding/json"
+	"os"
 	"testing"
+
+	"github.com/breiting/tree"
 )
 
 func TestGenerateRefTree(t *testing.T) {
 
-	// tree, err := reconstructReferenceTreefromJSON(jsonInput)
+	var halTree referenceTreeHal
+	err := json.Unmarshal([]byte(jsonInput), &halTree)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	refTree, err := reconstructReferenceTreefromJSON(halTree.Embedded.RexReferences)
+	if err != nil {
+		t.Errorf("Cannot reconstruct reference tree: %v", err)
+	}
+	if refTree == nil {
+		t.Errorf("Tree is nil")
+	}
+
+	// assign colors depending on the category
+
+	for _, v := range halTree.Embedded.RexReferences {
+
+		node := tree.FindByID(refTree, strip(v.Urn))
+		if node != nil {
+			if v.Type == "portal" {
+				node.Attributes["color"] = "lightblue"
+				node.Attributes["shape"] = "doublecircle"
+			}
+
+			switch v.Category {
+			case "activity":
+				node.Attributes["color"] = "beige"
+				node.Attributes["shape"] = "hexagon"
+				node.ID = "Activity\n" + node.ID
+			case "inspection":
+				node.Attributes["color"] = "salmon"
+				node.Attributes["shape"] = "hexagon"
+				node.ID = "Inspection\n" + node.ID
+			case "track":
+				node.Attributes["color"] = "plum"
+				node.Attributes["shape"] = "box"
+				node.ID = "Track\n" + node.ID
+			case "file":
+				node.Attributes["color"] = "lawngreen"
+				node.ID = "File\n" + node.ID
+			case "route":
+				node.Attributes["color"] = "purple"
+				node.Attributes["shape"] = "box"
+				node.ID = "Route\n" + node.ID
+			case "data":
+				node.Attributes["color"] = "cadetblue"
+				node.ID = "Data\n" + node.ID
+			}
+		}
+	}
+
+	f, _ := os.Create("/tmp/xxx.dot")
+	defer f.Close()
+	err = tree.WriteToDot(refTree, f)
+	if err != nil {
+		panic(err)
+	}
+
+	// f, _ := os.Create("/tmp/reftree.dot")
+	// defer f.Close()
+	//
+	// fmt.Fprintf(f, "digraph {")
+	// for _, v := range halTree.Embedded.RexReferences {
+	// 	fmt.Println("Category:", v.Category)
+	// 	if len(v.ParentReferenceUrn) > 0 {
+	// 		fmt.Fprintf(f, "%s -> %s;\n",
+	// 			v.ParentReferenceUrn[len(v.ParentReferenceUrn)-4:],
+	// 			v.Urn[len(v.Urn)-4:])
+	// 	}
+
+	// check if projectfile exists
+	// pflink := StripTemplateParameter(v.Links.ProjectFile.Href)
+	// pfresp, err := handler.GetFullyQualified(pflink)
 	// if err != nil {
-	// 	t.Errorf("Cannot reconstruct reference tree: %v", err)
+	// 	fmt.Println("Error during getting project file")
+	// } else {
+	// 	if pfresp.StatusCode() < 400 {
+	// 		name := gjson.GetBytes(pfresp.Body(), "name").String()
+	// 		fmt.Fprintf(f, "%s -> \"%s\";\n", v.Urn[len(v.Urn)-4:], name[0:8])
+	// 		fmt.Fprintf(f, "\"%s\" [shape=box,style=filled,color=yellow]\n", name[0:8])
+	// 	}
 	// }
-	// fmt.Println(tree.Head)
+	// }
+
+	// for _, v := range halTree.Embedded.RexReferences {
+	// 	if v.Type == "portal" {
+	// 		fmt.Fprintf(f, "%s [shape=doublecircle,style=filled,color=lightblue]\n", v.Urn[len(v.Urn)-4:])
+	// 	} else if v.Type == "group" {
+	// 		fmt.Fprintf(f, "%s [style=filled,color=cyan]\n", v.Urn[len(v.Urn)-4:])
+	// 	} else if v.Type == "file" {
+	// 		fmt.Fprintf(f, "%s [style=filled,color=green]\n", v.Urn[len(v.Urn)-4:])
+	// 	}
+	// }
+	// fmt.Fprintln(f, "}")
+
 }
 
 func TestSimpleRefTree(t *testing.T) {
@@ -24,11 +118,13 @@ func TestSimpleRefTree(t *testing.T) {
 	refs = append(refs, Reference{Urn: "2", ParentReferenceUrn: "1"})
 	refs = append(refs, Reference{Urn: "1", RootReference: true})
 
-	tree, err := reconstructReferenceTreefromJSON(refs)
+	refTree, err := reconstructReferenceTreefromJSON(refs)
 	if err != nil {
 		t.Errorf("Cannot reconstruct reference tree: %v", err)
 	}
-	fmt.Println(tree.Head)
+	if refTree == nil {
+		t.Errorf("Referencetree is nil")
+	}
 }
 
 const jsonInput = `
@@ -44,43 +140,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10050/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -94,43 +190,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10047/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -144,43 +240,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10045/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -194,43 +290,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10009/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -244,43 +340,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9948/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -294,43 +390,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9946/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -344,43 +440,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9944/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -394,43 +490,43 @@ const jsonInput = `
       "type" : "group",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9942/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -444,43 +540,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9938/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -494,43 +590,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9935/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -544,46 +640,46 @@ const jsonInput = `
       "type" : "group",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930{?projection}",
           "templated" : true
         },
         "dataResource" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/activities/search/findByUrn?urn=rexos:activity:2294"
+          "href" : "https://api.rexos.cloud/api/v2/activities/search/findByUrn?urn=rexos:activity:2294"
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9930/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -597,46 +693,46 @@ const jsonInput = `
       "type" : "group",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929{?projection}",
           "templated" : true
         },
         "dataResource" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/inspections/search/findByUrn?urn=rexos:inspection:2333"
+          "href" : "https://api.rexos.cloud/api/v2/inspections/search/findByUrn?urn=rexos:inspection:2333"
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9929/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -650,43 +746,43 @@ const jsonInput = `
       "type" : "portal",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9928/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -700,43 +796,43 @@ const jsonInput = `
       "type" : "root",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/9927/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -750,43 +846,43 @@ const jsonInput = `
       "type" : "file",
       "_links" : {
         "self" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
         },
         "rexReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105{?projection}",
           "templated" : true
         },
         "constructionLayout" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayouts/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
         },
         "constructionLayoutVersion" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutVersions/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
         },
         "constructionLayoutItem" : {
-          "href" : "https://api-dev-01.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
+          "href" : "https://api.rexos.cloud/api/v2/constructionLayoutItems/search/findByRexReference?rexReference=https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105"
         },
         "projectFile" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/projectFile{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/projectFile{?projection}",
           "templated" : true
         },
         "project" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/project{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/project{?projection}",
           "templated" : true
         },
         "projectFiles" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/projectFiles{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/projectFiles{?projection}",
           "templated" : true
         },
         "parentReference" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/parentReference{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/parentReference{?projection}",
           "templated" : true
         },
         "childReferences" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/childReferences{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/childReferences{?projection}",
           "templated" : true
         },
         "rexReferenceConfigs" : {
-          "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/rexReferenceConfigs{?projection}",
+          "href" : "https://api.rexos.cloud/rex-gateway/api/v2/rexReferences/10105/rexReferenceConfigs{?projection}",
           "templated" : true
         }
       }
@@ -794,7 +890,7 @@ const jsonInput = `
   },
   "_links" : {
     "self" : {
-      "href" : "https://api-dev-01.rexos.cloud/rex-gateway/api/v2/projects/9926/rexReferences?projection=linkedList"
+      "href" : "https://api.rexos.cloud/rex-gateway/api/v2/projects/9926/rexReferences?projection=linkedList"
     }
   }
 }
