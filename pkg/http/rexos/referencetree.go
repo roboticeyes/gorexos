@@ -63,8 +63,32 @@ func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (Re
 }
 
 // GetTransformations fetches all transformations for all references and project files
-func (t *ReferenceTree) GetTransformations() {
-	fmt.Println("not implemented")
+func (t *ReferenceTree) GetTransformations(handler RequestHandler) error {
+	for i, ref := range t.References {
+		resp, err := handler.Get(apiReferences + "/" + strip(ref.Urn))
+
+		if err != nil {
+			return err
+		}
+
+		var refResponse Reference
+		err = json.Unmarshal(resp.Body(), &refResponse)
+		t.References[i].LocalTransformation = refResponse.LocalTransformation
+		t.References[i].WorldTransformation = refResponse.WorldTransformation
+	}
+
+	for i, projectFile := range t.ProjectFiles {
+		resp, err := handler.Get(apiProjectFiles + "/" + strip(projectFile.Urn))
+
+		if err != nil {
+			return err
+		}
+
+		var projectFileResponse ProjectFile
+		err = json.Unmarshal(resp.Body(), &projectFileResponse)
+		t.ProjectFiles[i].DataTransformation = projectFileResponse.DataTransformation
+	}
+	return nil
 }
 
 // Beautify modifies the tree and adds attributes to the graph
