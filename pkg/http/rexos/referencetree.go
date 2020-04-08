@@ -62,6 +62,11 @@ func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (Re
 	return refTree, err
 }
 
+// GetTransformations fetches all transformations for all references and project files
+func (t *ReferenceTree) GetTransformations() {
+	fmt.Println("not implemented")
+}
+
 // Beautify modifies the tree and adds attributes to the graph
 func (t *ReferenceTree) Beautify() {
 
