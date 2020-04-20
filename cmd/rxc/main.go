@@ -59,6 +59,7 @@ func main() {
 		commands.ProjectCommand,
 		commands.StatisticsCommand,
 		commands.ReferenceTreeCommand,
+		commands.TargetCommand,
 	}
 
 	err := app.Run(os.Args)

@@ -12,6 +12,9 @@ var (
 	apiReferences                      = "/api/v2/rexReferences"
 	apiReferenceByKey                  = "/api/v2/rexReferences/search/findByKey?"
 
+	// Inspection service
+	apiInspectionTargets = "/inspection/v1/targets"
+
 	// Construction service
 	apiConstructionLayoutItems            = "/construction/v1/constructionLayoutItems"
 	apiConstructionLayoutVersions         = "/construction/v1/constructionLayoutVersions"

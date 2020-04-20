@@ -63,15 +63,39 @@ func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (Re
 }
 
 // GetTransformations fetches all transformations for all references and project files
-func (t *ReferenceTree) GetTransformations() {
-	fmt.Println("not implemented")
+func (t *ReferenceTree) GetTransformations(handler RequestHandler) error {
+	for i, ref := range t.References {
+		resp, err := handler.Get(apiReferences + "/" + StripPrefix(ref.Urn))
+
+		if err != nil {
+			return err
+		}
+
+		var refResponse Reference
+		err = json.Unmarshal(resp.Body(), &refResponse)
+		t.References[i].LocalTransformation = refResponse.LocalTransformation
+		t.References[i].WorldTransformation = refResponse.WorldTransformation
+	}
+
+	for i, projectFile := range t.ProjectFiles {
+		resp, err := handler.Get(apiProjectFiles + "/" + StripPrefix(projectFile.Urn))
+
+		if err != nil {
+			return err
+		}
+
+		var projectFileResponse ProjectFile
+		err = json.Unmarshal(resp.Body(), &projectFileResponse)
+		t.ProjectFiles[i].DataTransformation = projectFileResponse.DataTransformation
+	}
+	return nil
 }
 
 // Beautify modifies the tree and adds attributes to the graph
 func (t *ReferenceTree) Beautify() {
 
 	// add project node
-	root := tree.NewNode(t.ProjectType + "\n" + strip(t.ProjectUrn))
+	root := tree.NewNode(t.ProjectType + "\n" + StripPrefix(t.ProjectUrn))
 	root.Attributes["shape"] = "octagon"
 	root.Attributes["color"] = "gray"
 	root.Children = append(root.Children, t.Tree)
@@ -79,7 +103,7 @@ func (t *ReferenceTree) Beautify() {
 
 	for _, v := range t.References {
 
-		node := tree.FindByID(t.Tree, strip(v.Urn))
+		node := tree.FindByID(t.Tree, StripPrefix(v.Urn))
 		if node != nil {
 			switch v.Type {
 			case "portal":
@@ -114,7 +138,7 @@ func (t *ReferenceTree) Beautify() {
 					// found project file
 					fileSize := fmt.Sprintf("~%.2fmb", float32(p.FileSize)/1000.0/1000.0)
 					pfNode := &tree.Node{
-						ID:         p.Type + "\n" + strip(p.Urn) + "\n" + fileSize,
+						ID:         p.Type + "\n" + StripPrefix(p.Urn) + "\n" + fileSize,
 						Name:       p.Name,
 						Attributes: make(map[string]string),
 					}
@@ -136,14 +160,14 @@ func reconstructReferenceTreefromJSON(refs []Reference) (*tree.Node, error) {
 	var relations []tree.Relation
 
 	for _, v := range refs {
-		relations = append(relations, tree.Relation{ID: strip(v.Urn), ParentID: strip(v.ParentReferenceUrn)})
+		relations = append(relations, tree.Relation{ID: StripPrefix(v.Urn), ParentID: StripPrefix(v.ParentReferenceUrn)})
 	}
 
 	return tree.Deserialize(relations)
 }
 
-// strip removes the prefix and only returns the ID
-func strip(urn string) string {
+// StripPrefix removes the prefix of the URN and only returns the ID
+func StripPrefix(urn string) string {
 	parts := strings.Split(urn, ":")
 	return parts[len(parts)-1]
 }
