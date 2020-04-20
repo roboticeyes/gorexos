@@ -84,11 +84,7 @@ func createTarget(ctx *cli.Context) error {
 	// Upload all target files
 	for _, v := range targetInput.TargetFiles {
 		fmt.Println("Uploading target file", v.LocalFile)
-		targetFileUrn, err := rexos.CreateTargetFile(handler, res.Urn, v)
-		if err != nil {
-			color.Red.Println("Cannot create target file:", err)
-		}
-		err = rexos.UploadTargetFile(handler, res.Urn, targetFileUrn, v.LocalFile)
+		err := rexos.CreateTargetFile(handler, res.Urn, v)
 		if err != nil {
 			color.Red.Println("Cannot create target file:", err)
 		}

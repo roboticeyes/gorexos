@@ -59,7 +59,7 @@ func CreateTarget(handler RequestHandler, target Target) (Target, error) {
 }
 
 // CreateTargetFile creates a new target file and returns the URN
-func CreateTargetFile(handler RequestHandler, targetUrn string, targetFile TargetFile) (string, error) {
+func CreateTargetFile(handler RequestHandler, targetUrn string, targetFile TargetFile) error {
 
 	body := struct {
 		Rotation    math.Vec4f `json:"rotation"`
@@ -75,19 +75,24 @@ func CreateTargetFile(handler RequestHandler, targetUrn string, targetFile Targe
 	resp, err := handler.Post(apiInspectionTargets+"/"+targetUrn+"/"+"files", body)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	err = json.Unmarshal(resp.Body(), &body)
 
 	if resp.StatusCode() != http.StatusCreated {
-		return "", fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
+		return fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
 	}
 
-	return body.Urn, nil
+	err = uploadTargetFile(handler, targetUrn, body.Urn, targetFile.LocalFile)
+	if err != nil {
+		return fmt.Errorf("Failed to upload binary file, got back: %v", err)
+	}
+
+	return nil
 }
 
-func UploadTargetFile(handler RequestHandler, targetUrn, targetFileUrn, localFile string) error {
+func uploadTargetFile(handler RequestHandler, targetUrn, targetFileUrn, localFile string) error {
 
 	r, err := os.Open(localFile)
 	if err != nil {
