@@ -74,8 +74,6 @@ func createTarget(ctx *cli.Context) error {
 		return nil
 	}
 
-	fmt.Println(targetInput.Target)
-
 	res, err := rexos.CreateTarget(handler, targetInput.Target)
 	if err != nil {
 		color.Red.Println(err)
@@ -90,11 +88,7 @@ func createTarget(ctx *cli.Context) error {
 		}
 	}
 
-	// https://test.rex.codes/v1/73f03414-6694-4173-a5ad-a5c74d5416af
-
 	color.Green.Println("Successfully created target:", res.Urn)
-
-	// fmt.Println("DELETE project")
 	// handler.Delete("/inspection/v1/targets/"+res.Urn, "")
 	return nil
 }
