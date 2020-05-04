@@ -97,7 +97,7 @@ func (t *ReferenceTree) Beautify() {
 	// add project node
 	root := tree.NewNode(t.ProjectType + "\n" + StripPrefix(t.ProjectUrn))
 	root.Attributes["shape"] = "octagon"
-	root.Attributes["color"] = "gray"
+	root.Attributes["color"] = "azure2"
 	root.Children = append(root.Children, t.Tree)
 	t.Tree = root
 
@@ -107,29 +107,36 @@ func (t *ReferenceTree) Beautify() {
 		if node != nil {
 			switch v.Type {
 			case "portal":
-				node.Attributes["color"] = "lightpink1"
-				node.Attributes["shape"] = "doublecircle"
+				node.Attributes["color"] = "goldenrod1"
+				node.Attributes["shape"] = "circle"
 			case "root":
-				node.Attributes["color"] = "yellow2"
-			case "group":
-				node.Attributes["color"] = "darkolivegreen1"
+				node.Attributes["shape"] = "doublecircle"
+				node.Attributes["color"] = "firebrick"
+			// case "group":
+			// see below with categories
+			// 	node.Attributes["color"] = "darkolivegreen1"
 			case "file":
-				node.Attributes["color"] = "darkorange"
+				node.Attributes["color"] = "royalblue4"
 			}
 
 			switch v.Category {
 			case "activity":
 				node.ID = "Activity\n" + node.ID
+				node.Attributes["color"] = "chocolate2"
 			case "inspection":
 				node.ID = "Inspection\n" + node.ID
+				node.Attributes["color"] = "seagreen1"
 			case "track":
 				node.ID = "Track\n" + node.ID
+				node.Attributes["color"] = "orchid3"
 			case "file":
 				node.ID = "File\n" + node.ID
 			case "route":
 				node.ID = "Route\n" + node.ID
+				node.Attributes["color"] = "hotpink4"
 			case "data":
 				node.ID = "Data\n" + node.ID
+				node.Attributes["color"] = "aquamarine4"
 			}
 
 			// attach project file
@@ -143,6 +150,7 @@ func (t *ReferenceTree) Beautify() {
 						Attributes: make(map[string]string),
 					}
 					pfNode.Attributes["shape"] = "box"
+					pfNode.Attributes["color"] = "powderblue"
 					node.Children = append(node.Children, pfNode)
 				}
 			}
