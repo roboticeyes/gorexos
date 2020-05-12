@@ -116,7 +116,7 @@ func (t *ReferenceTree) Beautify() {
 			// see below with categories
 			// 	node.Attributes["color"] = "darkolivegreen1"
 			case "file":
-				node.Attributes["color"] = "royalblue4"
+				node.Attributes["color"] = "dodgerblue3"
 			}
 
 			switch v.Category {
