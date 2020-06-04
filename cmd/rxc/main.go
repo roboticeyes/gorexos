@@ -60,6 +60,7 @@ func main() {
 		commands.StatisticsCommand,
 		commands.ReferenceTreeCommand,
 		commands.TargetCommand,
+		commands.TranslateCommand,
 	}
 
 	err := app.Run(os.Args)
