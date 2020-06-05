@@ -18,6 +18,10 @@ type Job struct {
 	Status string `json:"status"`
 }
 
+type StringList struct {
+	Names []string `json:"names"`
+}
+
 // CreateJob creates a new translation job
 func CreateJob(handler rexos.RequestHandler, job Job) (Job, error) {
 
@@ -42,6 +46,42 @@ func UploadFile(handler rexos.RequestHandler, jobId string, fileName string, r i
 		return fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
 	}
 	return err
+}
+
+// GetPipelines get all the available pipelines
+func GetPipelines(handler rexos.RequestHandler) ([]string, error) {
+
+	var res StringList
+	url := "/translation/v1/pipelines"
+	resp, err := handler.Get(url)
+	if resp.StatusCode() != http.StatusOK {
+		return []string{}, fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
+	}
+
+	var names []string
+	err = json.Unmarshal(resp.Body(), &res)
+	for _, v := range res.Names {
+		names = append(names, v)
+	}
+	return names, err
+}
+
+// GetSupportedFormats get all the supported file formats
+func GetSupportedFormats(handler rexos.RequestHandler) ([]string, error) {
+
+	var res StringList
+	url := "/translation/v1/formats"
+	resp, err := handler.Get(url)
+	if resp.StatusCode() != http.StatusOK {
+		return []string{}, fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
+	}
+
+	var names []string
+	err = json.Unmarshal(resp.Body(), &res)
+	for _, v := range res.Names {
+		names = append(names, v)
+	}
+	return names, err
 }
 
 // GetJob gets the current status of the job

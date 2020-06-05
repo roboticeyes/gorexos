@@ -16,6 +16,67 @@ var TranslateCommand = &cli.Command{
 	Name:   "translate",
 	Usage:  "Translates an input geometry to a REXfile usine the REX translation composite service",
 	Action: translateAction,
+	Subcommands: []*cli.Command{
+		{
+			Name:  "list-formats",
+			Usage: "list all supported file formats",
+			Action: func(c *cli.Context) error {
+				session, err := rexos.OpenStoredSession()
+				if err != nil {
+					return err
+				}
+				if !session.Valid() {
+					color.Red.Println("Session is not valid and is expired on ", session.Expires)
+					return nil
+				}
+				handler := rexos.NewRequestHandler()
+				err = handler.AuthenticateWithSession(session)
+				if err != nil {
+					color.Red.Println("Cannot authenticate, please use login")
+				}
+				fmt.Println("Supported formats")
+				names, err := translation.GetSupportedFormats(handler)
+				if err != nil {
+					color.Red.Println("FAILED - ", err)
+					return err
+				}
+				for _, v := range names {
+					fmt.Println("  ", v)
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "list-pipelines",
+			Usage: "list all supported pipelines",
+			Action: func(c *cli.Context) error {
+				session, err := rexos.OpenStoredSession()
+				if err != nil {
+					return err
+				}
+				if !session.Valid() {
+					color.Red.Println("Session is not valid and is expired on ", session.Expires)
+					return nil
+				}
+				handler := rexos.NewRequestHandler()
+				err = handler.AuthenticateWithSession(session)
+				if err != nil {
+					color.Red.Println("Cannot authenticate, please use login")
+				}
+				fmt.Println("Pipelines")
+				names, err := translation.GetPipelines(handler)
+				if err != nil {
+					color.Red.Println("FAILED - ", err)
+					return err
+				}
+				for _, v := range names {
+					fmt.Println("  ", v)
+				}
+				return nil
+				return nil
+			},
+		},
+	},
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "pipeline",
