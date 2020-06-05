@@ -72,15 +72,15 @@ func GetJobResult(handler rexos.RequestHandler, jobId string, w io.Writer) error
 }
 
 // StartJob starts a job
-func StartJob(handler rexos.RequestHandler, jobId string) error {
+func StartJob(handler rexos.RequestHandler, jobId string, pipeline string) error {
 
 	url := "/translation/v1/jobs/" + jobId + "/start"
-	pipeline := struct {
+	payload := struct {
 		Pipeline string `json:"pipeline"`
 	}{
-		Pipeline: "standard",
+		Pipeline: pipeline,
 	}
-	resp, err := handler.Post(url, pipeline)
+	resp, err := handler.Post(url, payload)
 	if resp.StatusCode() != http.StatusOK {
 		return fmt.Errorf("Failed, got back %d: %s", resp.StatusCode(), resp.Body())
 	}

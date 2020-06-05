@@ -16,6 +16,14 @@ var TranslateCommand = &cli.Command{
 	Name:   "translate",
 	Usage:  "Translates an input geometry to a REXfile usine the REX translation composite service",
 	Action: translateAction,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:     "pipeline",
+			Usage:    "Specifies the type of pipeline to be used (standard [default], ifc)",
+			Required: false,
+			Aliases:  []string{"p"},
+		},
+	},
 }
 
 func translateAction(ctx *cli.Context) error {
@@ -23,6 +31,11 @@ func translateAction(ctx *cli.Context) error {
 	if ctx.Args().Len() < 2 {
 		color.Red.Println("Please provide at least an input and output file as arguments.")
 		return nil
+	}
+
+	pipeline := ctx.String("pipeline")
+	if pipeline == "" {
+		pipeline = "standard"
 	}
 
 	session, err := rexos.OpenStoredSession()
@@ -68,7 +81,7 @@ func translateAction(ctx *cli.Context) error {
 
 	// start job
 	color.Green.Print("Starting job ... ")
-	err = translation.StartJob(handler, job.ID)
+	err = translation.StartJob(handler, job.ID, pipeline)
 	if err != nil {
 		color.Red.Println("FAILED - ", err)
 		return err
