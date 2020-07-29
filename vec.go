@@ -1,4 +1,4 @@
-package math
+package gorexos
 
 // Vec3f defines a simple 3D vector
 type Vec3f struct {

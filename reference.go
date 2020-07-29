@@ -1,25 +1,24 @@
-package rexos
+package gorexos
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/roboticeyes/gorexos/pkg/math"
 	"github.com/tidwall/gjson"
 )
 
 // Reference is representing a simple form of a REX reference potentially including all its children
 type Reference struct {
-	Urn                 string              `json:"urn"`
-	ParentReferenceUrn  string              `json:"parentReferenceUrn"`
-	RootReference       bool                `json:"rootReference"`
-	Name                string              `json:"name"`
-	Key                 string              `json:"key"`
-	Category            string              `json:"category"`
-	ProjectFileUrn      string              `json:"projectFileUrn"`
-	WorldTransformation math.Transformation `json:"worldTransformation"`
-	LocalTransformation math.Transformation `json:"localTransformation"`
-	Type                string              `json:"type"`
+	Urn                 string         `json:"urn"`
+	ParentReferenceUrn  string         `json:"parentReferenceUrn"`
+	RootReference       bool           `json:"rootReference"`
+	Name                string         `json:"name"`
+	Key                 string         `json:"key"`
+	Category            string         `json:"category"`
+	ProjectFileUrn      string         `json:"projectFileUrn"`
+	WorldTransformation Transformation `json:"worldTransformation"`
+	LocalTransformation Transformation `json:"localTransformation"`
+	Type                string         `json:"type"`
 	Links               struct {
 		Self struct {
 			Href string `json:"href"`

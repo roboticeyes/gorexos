@@ -1,21 +1,19 @@
-package rexos
+package gorexos
 
 import (
 	"encoding/json"
-
-	"github.com/roboticeyes/gorexos/pkg/math"
 )
 
 // ProjectFile structure of REXos
 type ProjectFile struct {
-	LastModified       string              `json:"lastModified"`
-	ContentType        string              `json:"contentType"`
-	Urn                string              `json:"urn"`
-	FileSize           int                 `json:"fileSize"`
-	ContentHash        string              `json:"contentHash"`
-	Name               string              `json:"name"`
-	Type               string              `json:"type"`
-	DataTransformation math.Transformation `json:"dataTransformation"`
+	LastModified       string         `json:"lastModified"`
+	ContentType        string         `json:"contentType"`
+	Urn                string         `json:"urn"`
+	FileSize           int            `json:"fileSize"`
+	ContentHash        string         `json:"contentHash"`
+	Name               string         `json:"name"`
+	Type               string         `json:"type"`
+	DataTransformation Transformation `json:"dataTransformation"`
 	Links              struct {
 		Self struct {
 			Href string `json:"href"`

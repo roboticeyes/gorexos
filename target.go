@@ -1,4 +1,4 @@
-package rexos
+package gorexos
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/roboticeyes/gorexos/pkg/math"
 )
 
 // Target is the top level entity for rex-inspection API
@@ -15,27 +14,27 @@ type Target struct {
 	Name            string `json:"name"`
 	Owner           string `json:"owner"`
 	PortalReference struct {
-		LocalTransformation math.Transformation `json:"localTransformation"`
-		RexTagURL           string              `json:"rexTagUrl"`
+		LocalTransformation Transformation `json:"localTransformation"`
+		RexTagURL           string         `json:"rexTagUrl"`
 	} `json:"portalReference"`
 	Type string `json:"type"`
 	Urn  string `json:"urn"`
 }
 
 type TargetFile struct {
-	LocalFile   string     `json:"localFile"`
-	Type        string     `json:"type"`
-	Translation math.Vec3f `json:"translation"`
+	LocalFile   string `json:"localFile"`
+	Type        string `json:"type"`
+	Translation Vec3f  `json:"translation"`
 }
 
 func DefaultTarget() Target {
 	return Target{
 		Name: uuid.New().String(),
 		PortalReference: struct {
-			LocalTransformation math.Transformation `json:"localTransformation"`
-			RexTagURL           string              `json:"rexTagUrl"`
+			LocalTransformation Transformation `json:"localTransformation"`
+			RexTagURL           string         `json:"rexTagUrl"`
 		}{
-			LocalTransformation: math.NewTransformation(),
+			LocalTransformation: NewTransformation(),
 			RexTagURL:           "",
 		},
 	}
@@ -62,12 +61,12 @@ func CreateTarget(handler RequestHandler, target Target) (Target, error) {
 func CreateTargetFile(handler RequestHandler, targetUrn string, targetFile TargetFile) error {
 
 	body := struct {
-		Rotation    math.Vec4f `json:"rotation"`
-		Translation math.Vec3f `json:"translation"`
-		Type        string     `json:"type"`
-		Urn         string     `json:"urn"`
+		Rotation    Vec4f  `json:"rotation"`
+		Translation Vec3f  `json:"translation"`
+		Type        string `json:"type"`
+		Urn         string `json:"urn"`
 	}{
-		Rotation:    math.Vec4f{X: 0, Y: 0, Z: 0, W: 1},
+		Rotation:    Vec4f{X: 0, Y: 0, Z: 0, W: 1},
 		Translation: targetFile.Translation,
 		Type:        targetFile.Type,
 	}

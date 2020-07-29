@@ -1,4 +1,4 @@
-package math
+package gorexos
 
 // Transformation is used for any transformation in the REXos system. It
 // uses quaternions for rotation and only one scale value.

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/roboticeyes/gorexos/pkg/http/rexos"
+	"github.com/roboticeyes/gorexos"
 )
 
 // Job contains the specification of a translation job
@@ -23,7 +23,7 @@ type StringList struct {
 }
 
 // CreateJob creates a new translation job
-func CreateJob(handler rexos.RequestHandler, job Job) (Job, error) {
+func CreateJob(handler gorexos.RequestHandler, job Job) (Job, error) {
 
 	resp, err := handler.Post("/translation/v1/jobs", job)
 	if err != nil {
@@ -38,7 +38,7 @@ func CreateJob(handler rexos.RequestHandler, job Job) (Job, error) {
 	return job, nil
 }
 
-func UploadFile(handler rexos.RequestHandler, jobId string, fileName string, r io.Reader) error {
+func UploadFile(handler gorexos.RequestHandler, jobId string, fileName string, r io.Reader) error {
 
 	url := "/translation/v1/jobs/" + jobId + "/files"
 	resp, err := handler.PostMultipartFile(url, filepath.Base(fileName), r)
@@ -49,7 +49,7 @@ func UploadFile(handler rexos.RequestHandler, jobId string, fileName string, r i
 }
 
 // GetPipelines get all the available pipelines
-func GetPipelines(handler rexos.RequestHandler) ([]string, error) {
+func GetPipelines(handler gorexos.RequestHandler) ([]string, error) {
 
 	var res StringList
 	url := "/translation/v1/pipelines"
@@ -67,7 +67,7 @@ func GetPipelines(handler rexos.RequestHandler) ([]string, error) {
 }
 
 // GetSupportedFormats get all the supported file formats
-func GetSupportedFormats(handler rexos.RequestHandler) ([]string, error) {
+func GetSupportedFormats(handler gorexos.RequestHandler) ([]string, error) {
 
 	var res StringList
 	url := "/translation/v1/formats"
@@ -85,7 +85,7 @@ func GetSupportedFormats(handler rexos.RequestHandler) ([]string, error) {
 }
 
 // GetJob gets the current status of the job
-func GetJob(handler rexos.RequestHandler, jobId string) (Job, error) {
+func GetJob(handler gorexos.RequestHandler, jobId string) (Job, error) {
 
 	var job Job
 	url := "/translation/v1/jobs/" + jobId
@@ -99,7 +99,7 @@ func GetJob(handler rexos.RequestHandler, jobId string) (Job, error) {
 }
 
 // GetJobResult gets the data from the job
-func GetJobResult(handler rexos.RequestHandler, jobId string, w io.Writer) error {
+func GetJobResult(handler gorexos.RequestHandler, jobId string, w io.Writer) error {
 
 	url := "/translation/v1/results/" + jobId
 	resp, err := handler.Get(url)
@@ -112,7 +112,7 @@ func GetJobResult(handler rexos.RequestHandler, jobId string, w io.Writer) error
 }
 
 // StartJob starts a job
-func StartJob(handler rexos.RequestHandler, jobId string, pipeline string) error {
+func StartJob(handler gorexos.RequestHandler, jobId string, pipeline string) error {
 
 	url := "/translation/v1/jobs/" + jobId + "/start"
 	payload := struct {

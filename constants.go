@@ -1,4 +1,4 @@
-package rexos
+package gorexos
 
 var (
 	// REXos core services

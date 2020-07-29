@@ -1,4 +1,4 @@
-package rexos
+package gorexos
 
 import (
 	b64 "encoding/base64"
