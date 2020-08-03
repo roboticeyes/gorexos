@@ -2,8 +2,10 @@
 package creation
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -101,6 +103,12 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 	}
 	defer r.Close()
 
+	dat, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return fmt.Errorf("error reading file %v", err)
+	}
+	reader := bytes.NewReader(dat)
+
 	var fileType string
 	if strings.ToLower(filepath.Ext(fileName)) == "rex" {
 		fileType = "rex"
@@ -134,9 +142,7 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 
 	// Upload file content
 	url = apiProjects + "/" + urn + "/files/" + pf.Urn + "/data"
-	fmt.Println(url)
-	// resp2, err := handler.PostMultipartFile(url, filepath.Base(fileName), r)
-	resp2, err := handler.PostMultipartFile(url, fileName, r)
+	resp2, err := handler.PostMultipartFile(url, fileName, reader)
 	if err != nil {
 		return err
 	}
