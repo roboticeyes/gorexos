@@ -1,9 +1,11 @@
 package gorexos
 
 import (
+	"bytes"
 	b64 "encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -117,8 +119,10 @@ func (r *requestHandler) Delete(path string, body interface{}) (*resty.Response,
 
 func (r *requestHandler) PostMultipartFile(path string, fileName string, fileData io.Reader) (*resty.Response, error) {
 
+	payload, _ := ioutil.ReadAll(fileData)
+
 	return r.client.R().
-		SetFileReader("file", fileName, fileData).
+		SetFileReader("file", fileName, bytes.NewReader(payload)).
 		SetAuthToken(r.session.AccessToken).
 		Post("https://" + r.session.Domain + pathPrefix + path)
 }
