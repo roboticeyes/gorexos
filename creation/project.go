@@ -49,15 +49,15 @@ type Project struct {
 	Name   string `json:"name"`
 	Owner  string `json:"owner"`
 	Urn    string `json:"urn"`
-	Anchor Anchor `json:"anchor`
+	Anchor Anchor `json:"anchor"`
 }
 
 type Anchor struct {
 	Key            string                 `json:"key"`
-	Name           string                 `json:"name`
-	Positioned     bool                   `json:"positioned`
+	Name           string                 `json:"name"`
+	Positioned     bool                   `json:"positioned"`
 	Urn            string                 `json:"urn"`
-	Transformation gorexos.Transformation `json:"transformation`
+	Transformation gorexos.Transformation `json:"transformation"`
 }
 
 type ProjectFile struct {
