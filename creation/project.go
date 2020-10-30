@@ -69,9 +69,29 @@ type ProjectFile struct {
 
 func GetProjects(handler gorexos.RequestHandler, userID string, p ProjectParameters) ([]ProjectDescription, error) {
 
-	projects := []ProjectDescription{}
+	resp, err := handler.Get(apiProjects)
+	if err != nil {
+		return []ProjectDescription{}, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return []ProjectDescription{}, fmt.Errorf("request responded with error code %s", resp.Status())
+	}
+	var response ProjectsResponse
+	err = json.Unmarshal(resp.Body(), &response)
+	return response.Projects, nil
+}
 
-	return projects, nil
+func DeleteProject(handler gorexos.RequestHandler, urn string) error {
+
+	resp, err := handler.Delete(apiProjects+"/"+urn, nil)
+
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("request responded with error code %s", resp.Status())
+	}
+	return nil
 }
 
 func CreateProject(handler gorexos.RequestHandler, name string) (Project, error) {
