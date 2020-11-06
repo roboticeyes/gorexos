@@ -39,7 +39,7 @@ func UserRexOSDir() string {
 		if home == "" {
 			home = os.Getenv("USERPROFILE")
 		}
-		return filepath.Join(home, "rexos")
+		return filepath.Join(home, ".config", "rexos")
 	} else if runtime.GOOS == "linux" {
 		home := os.Getenv("XDG_CONFIG_HOME")
 		if home != "" {

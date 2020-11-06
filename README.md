@@ -8,15 +8,19 @@
 
 # GoREXos
 
-The `gorexos` library implements functionality which is useful to communicate with the REXos. Please
-see more information about REXos [here](https://www.rexos.org). The library can easily be integrated into your Go
-project. It can help you to get started with REX as a developer.
+The `gorexos` library implements functionality which is useful to communicate
+with the REXos. Please see more information about REXos
+[here](https://www.rexos.org). The library can easily be integrated into your
+Go project. It can help you to get started with REX as a developer.
 
 ## Installation
 
-> You can install Go by following [these instructions](https://golang.org/doc/install). Please note that Go >= 1.13. is required!
+> You can install Go by following [these
+> instructions](https://golang.org/doc/install). Please note that Go >= 1.14.
+> is required!
 
-First, clone the repository to your local development path, and let go download all dependencies:
+First, clone the repository to your local development path, and let go download
+all dependencies:
 
 ```
 go mod tidy
@@ -32,9 +36,15 @@ Make sure that you just include the `gorexos` library in your application:
 package main
 
 import (
-    "github.com/roboticeyes/gorexos/http/rexos"
+    "github.com/roboticeyes/gorexos"
 )
 ```
+
+## Notice
+
+The folder `coreapi` is deprecated and should not be used anymore. It uses the
+old API v2 from REXos core services. Please use the new composite layer of the
+specific sub-folder.
 
 ## References
 

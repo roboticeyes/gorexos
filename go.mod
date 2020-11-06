@@ -9,7 +9,6 @@ require (
 	github.com/go-resty/resty/v2 v2.1.0
 	github.com/google/uuid v1.1.1
 	github.com/gookit/color v1.2.2
-	github.com/roboticeyes/gococo v0.0.0-20200730125432-4cb6be4905d1
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/tidwall/gjson v1.6.0
 	gopkg.in/yaml.v2 v2.2.2

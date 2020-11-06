@@ -1,4 +1,4 @@
-package gorexos
+package coreapi
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/roboticeyes/gorexos"
 	"github.com/tidwall/gjson"
 )
 
@@ -38,7 +39,7 @@ type Statistics struct {
 }
 
 // GetUserStatistics fetches all statistics for a given user
-func GetUserStatistics(handler RequestHandler, userID string) (Statistics, error) {
+func GetUserStatistics(handler gorexos.RequestHandler, userID string) (Statistics, error) {
 
 	var stats Statistics
 	resp, err := handler.Get(apiStatisticsByUserID + userID)
@@ -51,7 +52,7 @@ func GetUserStatistics(handler RequestHandler, userID string) (Statistics, error
 }
 
 // GetAllProjectsByOwner fetches all project for a given owner
-func GetAllProjectsByOwner(handler RequestHandler, owner string) ([]Project, error) {
+func GetAllProjectsByOwner(handler gorexos.RequestHandler, owner string) ([]Project, error) {
 
 	var projects []Project
 	resp, err := handler.Get(apiProjectByOwner + "owner=" + owner + "&projection=detailedList")
@@ -65,7 +66,7 @@ func GetAllProjectsByOwner(handler RequestHandler, owner string) ([]Project, err
 }
 
 // GetProjectByUrn fetches the project by a given URN
-func GetProjectByUrn(handler RequestHandler, urn string) (Project, error) {
+func GetProjectByUrn(handler gorexos.RequestHandler, urn string) (Project, error) {
 
 	var project Project
 	resp, err := handler.Get(apiProjectsByUrn + "urn=" + urn + "&projection=detailedList")
@@ -74,7 +75,7 @@ func GetProjectByUrn(handler RequestHandler, urn string) (Project, error) {
 		return project, err
 	}
 	err = json.Unmarshal(resp.Body(), &project)
-	project.SelfLink = GetSelfLinkFromHal(resp.Body())
+	project.SelfLink = gorexos.GetSelfLinkFromHal(resp.Body())
 
 	if project.Urn != urn {
 		return project, fmt.Errorf("%s", gjson.Get(string(resp.Body()), "message").String())

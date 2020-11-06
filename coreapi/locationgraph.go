@@ -1,4 +1,4 @@
-package gorexos
+package coreapi
 
 import (
 	"encoding/json"
@@ -7,10 +7,11 @@ import (
 	"strings"
 
 	"github.com/breiting/tree"
+	"github.com/roboticeyes/gorexos"
 )
 
-// ReferenceTree contains everything for getting information about the reference tree in REXos
-type ReferenceTree struct {
+// LocationGraph contains everything for getting information about the location graph in REXos
+type LocationGraph struct {
 	ProjectUrn   string
 	ProjectType  string
 	Tree         *tree.Node
@@ -18,9 +19,9 @@ type ReferenceTree struct {
 	ProjectFiles []ProjectFile
 }
 
-// referenceTreeHal is a serialized linked list of all references belonging to one project.
+// locationGraphHal is a serialized linked list of all references belonging to one project.
 // this can be retrieved by /projects/:id/rexReferences?projection=linkedList
-type referenceTreeHal struct {
+type locationGraphHal struct {
 	Embedded struct {
 		RexReferences []Reference `json:"rexReferences"`
 	} `json:"_embedded"`
@@ -31,39 +32,39 @@ type referenceTreeHal struct {
 	} `json:"_links"`
 }
 
-// GetReferenceTreeByProjectUrn returns the full reference tree for the given project URN
-func GetReferenceTreeByProjectUrn(handler RequestHandler, projectUrn string) (ReferenceTree, error) {
+// GetLocationGraphByProjectUrn returns the full location graph for the given project URN
+func GetLocationGraphByProjectUrn(handler gorexos.RequestHandler, projectUrn string) (LocationGraph, error) {
 
-	var refTree ReferenceTree
+	var locTree LocationGraph
 
 	// Get project
 	project, err := GetProjectByUrn(handler, projectUrn)
 	if err != nil {
-		return refTree, err
+		return locTree, err
 	}
-	refTree.ProjectUrn = project.Urn
-	refTree.ProjectType = project.Type
+	locTree.ProjectUrn = project.Urn
+	locTree.ProjectType = project.Type
 
 	// Get project file list
-	refTree.ProjectFiles, err = GetProjectFilesByProjectSelfLink(handler, project.SelfLink)
+	locTree.ProjectFiles, err = GetProjectFilesByProjectSelfLink(handler, project.SelfLink)
 
-	// Get reference tree
+	// Get references
 	resp, err := handler.GetFullyQualified(project.SelfLink + "/rexReferences?projection=linkedList")
 	if err != nil {
-		return refTree, err
+		return locTree, err
 	}
-	var halTree referenceTreeHal
+	var halTree locationGraphHal
 	err = json.Unmarshal(resp.Body(), &halTree)
 	if err != nil {
-		return refTree, err
+		return locTree, err
 	}
-	refTree.References = halTree.Embedded.RexReferences
-	refTree.Tree, err = reconstructReferenceTreefromJSON(halTree.Embedded.RexReferences)
-	return refTree, err
+	locTree.References = halTree.Embedded.RexReferences
+	locTree.Tree, err = reconstructLocationGraphfromJSON(halTree.Embedded.RexReferences)
+	return locTree, err
 }
 
 // GetTransformations fetches all transformations for all references and project files
-func (t *ReferenceTree) GetTransformations(handler RequestHandler) error {
+func (t *LocationGraph) GetTransformations(handler gorexos.RequestHandler) error {
 	for i, ref := range t.References {
 		resp, err := handler.Get(apiReferences + "/" + StripPrefix(ref.Urn))
 
@@ -92,7 +93,7 @@ func (t *ReferenceTree) GetTransformations(handler RequestHandler) error {
 }
 
 // Beautify modifies the tree and adds attributes to the graph
-func (t *ReferenceTree) Beautify() {
+func (t *LocationGraph) Beautify() {
 
 	// add project node
 	root := tree.NewNode(t.ProjectType + "\n" + StripPrefix(t.ProjectUrn))
@@ -158,12 +159,12 @@ func (t *ReferenceTree) Beautify() {
 	}
 }
 
-// WriteToDot gets the reference tree of the project and dumps out the structure as DOT file (graphviz)
-func (t *ReferenceTree) WriteToDot(w io.Writer) error {
+// WriteToDot gets the location graph of the project and dumps out the structure as DOT file (graphviz)
+func (t *LocationGraph) WriteToDot(w io.Writer) error {
 	return tree.WriteToDot(t.Tree, w)
 }
 
-func reconstructReferenceTreefromJSON(refs []Reference) (*tree.Node, error) {
+func reconstructLocationGraphfromJSON(refs []Reference) (*tree.Node, error) {
 
 	var relations []tree.Relation
 

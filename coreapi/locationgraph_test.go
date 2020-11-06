@@ -1,4 +1,4 @@
-package gorexos
+package coreapi
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestGenerateRefTree(t *testing.T) {
+func TestGenerateLocationGraph(t *testing.T) {
 
-	var halTree referenceTreeHal
+	var halTree locationGraphHal
 	err := json.Unmarshal([]byte(references), &halTree)
 	if err != nil {
 		t.Fatal(err)
@@ -20,28 +20,28 @@ func TestGenerateRefTree(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	refTree := ReferenceTree{
+	locGraph := LocationGraph{
 		ProjectUrn:   "roboticeyes:project:9926",
 		ProjectType:  "inspection.target",
 		ProjectFiles: files.Embedded.ProjectFiles,
 	}
-	refTree.References = halTree.Embedded.RexReferences
-	refTree.Tree, err = reconstructReferenceTreefromJSON(halTree.Embedded.RexReferences)
+	locGraph.References = halTree.Embedded.RexReferences
+	locGraph.Tree, err = reconstructLocationGraphfromJSON(halTree.Embedded.RexReferences)
 	if err != nil {
 		t.Errorf("Cannot reconstruct reference tree: %v", err)
 	}
-	if refTree.Tree == nil {
+	if locGraph.Tree == nil {
 		t.Errorf("Tree is nil")
 	}
 
-	refTree.Beautify()
-	err = refTree.WriteToDot(os.Stdout)
+	locGraph.Beautify()
+	err = locGraph.WriteToDot(os.Stdout)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestSimpleRefTree(t *testing.T) {
+func TestSimpleLocationGraph(t *testing.T) {
 
 	var refs []Reference
 	refs = append(refs, Reference{Urn: "6", ParentReferenceUrn: "2"})
@@ -51,11 +51,11 @@ func TestSimpleRefTree(t *testing.T) {
 	refs = append(refs, Reference{Urn: "2", ParentReferenceUrn: "1"})
 	refs = append(refs, Reference{Urn: "1", RootReference: true})
 
-	refTree, err := reconstructReferenceTreefromJSON(refs)
+	locGraph, err := reconstructLocationGraphfromJSON(refs)
 	if err != nil {
-		t.Errorf("Cannot reconstruct reference tree: %v", err)
+		t.Errorf("Cannot reconstruct location graph: %v", err)
 	}
-	if refTree == nil {
+	if locGraph == nil {
 		t.Errorf("Referencetree is nil")
 	}
 }
