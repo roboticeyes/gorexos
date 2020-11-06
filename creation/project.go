@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -19,7 +20,7 @@ const (
 	apiProjects = "/creation/v1/projects"
 )
 
-type ProjectsResponse struct {
+type ProjectsPaged struct {
 	Page struct {
 		Number        int `json:"number"`
 		Size          int `json:"size"`
@@ -39,10 +40,13 @@ type ProjectDescription struct {
 }
 
 type ProjectParameters struct {
-	Anchored        bool
-	IsOwnedBy       bool
-	IsReadSharedTo  bool
-	IsWriteSharedTo bool
+	Anchored        string
+	IsOwnedBy       string
+	IsReadSharedTo  string
+	IsWriteSharedTo string
+	Legacy          string
+	IsHiddenFor     string
+	IsFavoriteOf    string
 }
 
 type Project struct {
@@ -67,18 +71,41 @@ type ProjectFile struct {
 	Type           string                 `json:"type"`
 }
 
-func GetProjects(handler gorexos.RequestHandler, userID string, p ProjectParameters) ([]ProjectDescription, error) {
-
-	resp, err := handler.Get(apiProjects)
+func GetProjects(handler gorexos.RequestHandler, page int64, params *ProjectParameters) (ProjectsPaged, error) {
+	paramString := ""
+	if params != nil {
+		if params.Anchored != "" {
+			paramString += "&anchored=" + params.Anchored
+		}
+		if params.IsOwnedBy != "" {
+			paramString += "&isOwnedBy=" + params.IsOwnedBy
+		}
+		if params.IsReadSharedTo != "" {
+			paramString += "&isReadSharedTo=" + params.IsReadSharedTo
+		}
+		if params.IsWriteSharedTo != "" {
+			paramString += "&isWriteSharedTo=" + params.IsWriteSharedTo
+		}
+		if params.Legacy != "" {
+			paramString += "&legacy=" + params.Legacy
+		}
+		if params.IsHiddenFor != "" {
+			paramString += "&isHiddenFor=" + params.IsHiddenFor
+		}
+		if params.IsFavoriteOf != "" {
+			paramString += "&isFavoriteOf=" + params.IsFavoriteOf
+		}
+	}
+	resp, err := handler.Get(apiProjects + "?page=" + strconv.FormatInt(page, 10) + paramString)
 	if err != nil {
-		return []ProjectDescription{}, err
+		return ProjectsPaged{}, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return []ProjectDescription{}, fmt.Errorf("request responded with error code %s", resp.Status())
+		return ProjectsPaged{}, fmt.Errorf("request responded with error code %s", resp.Status())
 	}
-	var response ProjectsResponse
+	var response ProjectsPaged
 	err = json.Unmarshal(resp.Body(), &response)
-	return response.Projects, nil
+	return response, nil
 }
 
 func DeleteProject(handler gorexos.RequestHandler, urn string) error {
