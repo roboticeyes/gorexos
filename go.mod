@@ -1,6 +1,6 @@
 module github.com/roboticeyes/gorexos
 
-go 1.13
+go 1.14
 
 require (
 	github.com/breiting/tree v0.0.0-20200325153814-d665d8f23f43

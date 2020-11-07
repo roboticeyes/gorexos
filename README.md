@@ -42,9 +42,8 @@ import (
 
 ## Notice
 
-The folder `coreapi` is deprecated and should not be used anymore. It uses the
-old API v2 from REXos core services. Please use the new composite layer of the
-specific sub-folder.
+The folder `coreapi` is accessing the API v2 directly and requires expert knowledge.
+We suggest to use the composite API.
 
 ## References
 
