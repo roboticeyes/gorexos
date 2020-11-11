@@ -157,7 +157,7 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 	reader := bytes.NewReader(dat)
 
 	var fileType string
-	if strings.ToLower(filepath.Ext(fileName)) == "rex" {
+	if strings.ToLower(filepath.Ext(fileName)) == ".rex" {
 		fileType = "rex"
 	} else {
 		mime, err := mimetype.DetectReader(r)
@@ -172,7 +172,6 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 		Transformation: transformation,
 		Type:           fileType,
 	}
-	fmt.Printf("%+v\n", pf)
 
 	// Create project file
 	url := apiProjects + "/" + urn + "/files"
@@ -185,7 +184,6 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 		return fmt.Errorf("request responded with error code %s", resp.Status())
 	}
 	err = json.Unmarshal(resp.Body(), &pf)
-	fmt.Printf("%+v\n", pf)
 
 	// Upload file content
 	url = apiProjects + "/" + urn + "/files/" + pf.Urn + "/data"
