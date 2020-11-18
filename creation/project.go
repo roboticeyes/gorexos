@@ -50,13 +50,13 @@ type ProjectParameters struct {
 }
 
 type Project struct {
-	Name   string `json:"name"`
-	Owner  string `json:"owner"`
-	Urn    string `json:"urn"`
-	Anchor Anchor `json:"anchor"`
+	Name            string          `json:"name"`
+	Owner           string          `json:"owner"`
+	Urn             string          `json:"urn"`
+	PortalReference PortalReference `json:"portalReference"`
 }
 
-type Anchor struct {
+type PortalReference struct {
 	Key            string                 `json:"key"`
 	Name           string                 `json:"name"`
 	Positioned     bool                   `json:"positioned"`
@@ -65,10 +65,10 @@ type Anchor struct {
 }
 
 type ProjectFile struct {
-	Name           string                 `json:"name"`
-	Urn            string                 `json:"urn"`
-	Transformation gorexos.Transformation `json:"transformation"`
-	Type           string                 `json:"type"`
+	Name           string                          `json:"name"`
+	Urn            string                          `json:"urn"`
+	Transformation gorexos.TransformationWithScale `json:"transformation"`
+	Type           string                          `json:"type"`
 }
 
 func GetProjects(handler gorexos.RequestHandler, page int64, params *ProjectParameters) (ProjectsPaged, error) {
@@ -121,12 +121,17 @@ func DeleteProject(handler gorexos.RequestHandler, urn string) error {
 	return nil
 }
 
-func CreateProject(handler gorexos.RequestHandler, name string) (Project, error) {
+func CreateProject(handler gorexos.RequestHandler, name string, portalTransform *gorexos.Transformation) (Project, error) {
 
+	// Make sure to create a valid transformation if nothing is applied
+	t := gorexos.NewTransformation()
+	if portalTransform != nil {
+		t = *portalTransform
+	}
 	project := Project{
 		Name: name,
-		Anchor: Anchor{
-			Transformation: gorexos.NewTransformation(),
+		PortalReference: PortalReference{
+			Transformation: t,
 		},
 	}
 	resp, err := handler.Post(apiProjects, project)
@@ -142,17 +147,25 @@ func CreateProject(handler gorexos.RequestHandler, name string) (Project, error)
 	return project, err
 }
 
-func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, transformation gorexos.Transformation) error {
+func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, dataTransform *gorexos.TransformationWithScale) (ProjectFile, error) {
+
+	// Make sure to create a valid transformation if nothing is applied
+	t := gorexos.NewTransformationWithScale()
+	if dataTransform != nil {
+		t = *dataTransform
+	}
+
+	var pf ProjectFile
 
 	r, err := os.Open(fileName)
 	if err != nil {
-		return err
+		return pf, err
 	}
 	defer r.Close()
 
 	dat, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("error reading file %v", err)
+		return pf, fmt.Errorf("error reading file %v", err)
 	}
 	reader := bytes.NewReader(dat)
 
@@ -162,14 +175,14 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 	} else {
 		mime, err := mimetype.DetectReader(r)
 		if err != nil {
-			return fmt.Errorf("Cannot detect MIME type: %v", err)
+			return pf, fmt.Errorf("Cannot detect MIME type: %v", err)
 		}
 		fileType = mime.String()
 	}
 
-	pf := ProjectFile{
+	pf = ProjectFile{
 		Name:           filepath.Base(fileName),
-		Transformation: transformation,
+		Transformation: t,
 		Type:           fileType,
 	}
 
@@ -178,10 +191,10 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 	resp, err := handler.Post(url, pf)
 
 	if err != nil {
-		return err
+		return pf, err
 	}
 	if resp.StatusCode() != http.StatusCreated {
-		return fmt.Errorf("request responded with error code %s", resp.Status())
+		return pf, fmt.Errorf("request responded with error code %s", resp.Status())
 	}
 	err = json.Unmarshal(resp.Body(), &pf)
 
@@ -189,14 +202,14 @@ func UploadProjectFile(handler gorexos.RequestHandler, urn, fileName string, tra
 	url = apiProjects + "/" + urn + "/files/" + pf.Urn + "/data"
 	resp2, err := handler.PostMultipartFile(url, fileName, reader)
 	if err != nil {
-		return err
+		return pf, err
 	}
 
 	if resp2.StatusCode() != http.StatusCreated {
 		// delete file
 		handler.Delete(apiProjects+"/"+urn+"/files/"+pf.Urn, nil)
-		return fmt.Errorf("request responded with error code %s", resp2.Status())
+		return pf, fmt.Errorf("request responded with error code %s", resp2.Status())
 	}
 
-	return nil
+	return pf, nil
 }
