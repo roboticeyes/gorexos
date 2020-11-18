@@ -9,33 +9,29 @@ import (
 )
 
 const (
-	apiPois = "/pois"
+	apiFileReferences = "/filereferences"
 )
 
-type Poi struct {
+type FileReference struct {
 	FileUrn        string                 `json:"fileUrn"`
 	Transformation gorexos.Transformation `json:"transformation"`
 	Urn            string                 `json:"urn"`
 }
 
-// CreatPoi creates a 3D reference in space which points to a project file being
+// CreateFileReference creates a 3D reference in space which points to a project file being
 // referenced by the fileUrn. The project file needs to be created first.
-func CreatePoi(handler gorexos.RequestHandler, projectUrn, fileUrn string, translation gorexos.Vec3f, rotation gorexos.Vec4f) (Poi, error) {
+func CreateFileReference(handler gorexos.RequestHandler, projectUrn, fileUrn string, localTransformation gorexos.Transformation) (FileReference, error) {
 
 	if fileUrn == "" {
-		return Poi{}, fmt.Errorf("fileUrn cannot be empty")
+		return FileReference{}, fmt.Errorf("fileUrn cannot be empty")
 	}
 
-	p := Poi{
-		FileUrn: fileUrn,
-		Transformation: gorexos.Transformation{
-			Translation: translation,
-			Rotation:    rotation,
-			Scale:       1.0,
-		},
+	p := FileReference{
+		FileUrn:        fileUrn,
+		Transformation: localTransformation,
 	}
 
-	resp, err := handler.Post(apiProjects+"/"+projectUrn+apiPois, p)
+	resp, err := handler.Post(apiProjects+"/"+projectUrn+apiFileReferences, p)
 
 	if err != nil {
 		return p, err
