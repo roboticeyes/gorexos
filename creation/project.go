@@ -121,18 +121,11 @@ func DeleteProject(handler gorexos.RequestHandler, urn string) error {
 	return nil
 }
 
-func CreateProject(handler gorexos.RequestHandler, name string, portalTransform *gorexos.Transformation) (Project, error) {
+func CreateProject(handler gorexos.RequestHandler, name string, portalReference PortalReference) (Project, error) {
 
-	// Make sure to create a valid transformation if nothing is applied
-	t := gorexos.NewTransformation()
-	if portalTransform != nil {
-		t = *portalTransform
-	}
 	project := Project{
-		Name: name,
-		PortalReference: PortalReference{
-			Transformation: t,
-		},
+		Name:            name,
+		PortalReference: portalReference,
 	}
 	resp, err := handler.Post(apiProjects, project)
 
