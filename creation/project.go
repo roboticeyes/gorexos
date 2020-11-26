@@ -96,7 +96,7 @@ func GetProjects(handler gorexos.RequestHandler, page int64, params *ProjectPara
 			paramString += "&isFavoriteOf=" + params.IsFavoriteOf
 		}
 	}
-	resp, err := handler.Get(apiProjects + "?page=" + strconv.FormatInt(page, 10) + paramString)
+	resp, err := handler.Get(apiProjects + "?sort=lastUpdated&page=" + strconv.FormatInt(page, 10) + paramString)
 	if err != nil {
 		return ProjectsPaged{}, err
 	}
