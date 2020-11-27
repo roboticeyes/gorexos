@@ -18,6 +18,7 @@ import (
 
 const (
 	apiProjects = "/creation/v1/projects"
+	apiFiles    = "/files"
 )
 
 type ProjectsPaged struct {
@@ -71,6 +72,13 @@ type ProjectFile struct {
 	Type           string                          `json:"type"`
 }
 
+type ProjectFileDetail struct {
+	ProjectFile
+	ContentType  string `json:"contentType"`
+	DownloadLink string `json:"downloadLink"`
+	FileSize     int    `json:"fileSize"`
+}
+
 func GetProjects(handler gorexos.RequestHandler, page int64, params *ProjectParameters) (ProjectsPaged, error) {
 	paramString := ""
 	if params != nil {
@@ -106,6 +114,23 @@ func GetProjects(handler gorexos.RequestHandler, page int64, params *ProjectPara
 	var response ProjectsPaged
 	err = json.Unmarshal(resp.Body(), &response)
 	return response, nil
+}
+
+func GetProjectFiles(handler gorexos.RequestHandler, projectUrn string) ([]ProjectFileDetail, error) {
+
+	files := []ProjectFileDetail{}
+	resp, err := handler.Get(apiProjects + "/" + projectUrn + apiFiles)
+	if err != nil {
+		return files, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return files, fmt.Errorf("request responded with error code %s", resp.Status())
+	}
+	response := struct {
+		Files []ProjectFileDetail `json:"files"`
+	}{}
+	err = json.Unmarshal(resp.Body(), &response)
+	return response.Files, nil
 }
 
 func DeleteProject(handler gorexos.RequestHandler, urn string) error {
